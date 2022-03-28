@@ -9,10 +9,13 @@ from cups_notify.listener import NotificationListerner
 
 class Subscriber(object):
 
-    def __init__(self, cups_conn, local_address='localhost'):
+    def __init__(self, cups_conn, listen_address='localhost', listen_port=0, publish_address=None, publish_port=None):
         self._conn = cups_conn
         self._callbacks = {}
-        self.address = local_address
+        self.listen_address = listen_address
+        self.listen_port = listen_port
+        self.publish_address = publish_address
+        self.publish_port = publish_port
 
     def __del__(self):
         self.unsubscribe_all()
@@ -25,7 +28,7 @@ class Subscriber(object):
             filters = [event.CUPS_EVT_ALL]
         if cb in self._callbacks:
             self._callbacks[cb].shutdown()
-        self._callbacks[cb] = NotificationListerner(self._conn, cb, filters, self.address)
+        self._callbacks[cb] = NotificationListener(self._conn, cb, filters, self.listen_address, self.listen_port, self.publish_address, self.publish_port)
         self._callbacks[cb].start()
 
     def is_subscribed(self, cb):

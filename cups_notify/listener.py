@@ -5,11 +5,7 @@ import threading
 import os.path as osp
 from contextlib import closing
 from xml.etree import ElementTree
-try:
-    from http.server import HTTPServer, BaseHTTPRequestHandler
-except ImportError:
-    # Python 2.x fallback
-    from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 import cups
 from cups_notify import LOGGER
@@ -22,9 +18,7 @@ def find_free_port():
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         return sock.getsockname()[1]
 
-
 class NotificationHandler(BaseHTTPRequestHandler):
-
     def get_chunk_size(self):
         size_str = self.rfile.read(2)
         while size_str[-2:] != b"\r\n":
@@ -73,14 +67,19 @@ class NotificationHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
 
-class NotificationListerner(HTTPServer):
+class NotificationListener(HTTPServer):
 
-    def __init__(self, cups_conn, callback, filters=None, address='localhost'):
-        HTTPServer.__init__(self, (address, find_free_port()), NotificationHandler)
+    def __init__(self, cups_conn, callback, filters=None, listen_address='localhost', listen_port=0, publish_address=None, publish_port=None):
+        if listen_port == 0: listen_port = find_free_port()
+
+        if not publish_address: publish_address = listen_address
+        if not publish_port: publish_port = listen_port
+
+        HTTPServer.__init__(self, (listen_address, listen_port), NotificationHandler)
         self._conn = cups_conn
         self._thread = None
         self._filters = filters or [event.CUPS_EVT_ALL]
-        self._rss_uri = 'rss://{}:{}'.format(self.server_address[0], self.server_address[1])
+        self._rss_uri = 'rss://{}:{}'.format(publish_address, publish_port)
         self._last_guid = -1
         self._callback = callback
 
