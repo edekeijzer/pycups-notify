@@ -4,7 +4,7 @@
 import time
 from cups_notify import LOGGER
 from cups_notify import event
-from cups_notify.listener import NotificationListerner
+from cups_notify.listener import NotificationListener
 
 
 class Subscriber(object):
